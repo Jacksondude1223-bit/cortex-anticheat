@@ -1,0 +1,13 @@
+name: CortexAntiCheat
+version: ${project.version}
+main: com.cortex.anticheat.CortexAntiCheatPlugin
+author: Cortex
+commands:
+  cortex:
+    description: Cortex anti-cheat administration.
+    permission: cortex.admin
+permissions:
+  cortex.admin:
+    default: op
+  cortex.alerts:
+    default: op

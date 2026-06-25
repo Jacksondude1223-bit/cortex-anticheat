@@ -1,0 +1,55 @@
+server-id: "smp-1"
+server-role: "SMP"
+job:
+  interval-ticks: 20
+  decay-interval-ticks: 200
+sync:
+  enabled: true
+  channel: "cortex:sync"
+discord:
+  enabled: false
+  webhook-url: "https://discord.com/api/webhooks/paste-webhook-here"
+  username: "Cortex AntiCheat"
+client-detection:
+  enabled: true
+  kick-message: "&cCortex AntiCheat\n&7The client &e%client% &7is not allowed on this server because it is a known hacked client."
+  blocked-brands:
+    - "wurst"
+    - "meteor"
+    - "impact"
+    - "aristois"
+    - "liquidbounce"
+    - "sigma"
+    - "future"
+    - "rusherhack"
+    - "bleachhack"
+    - "inertia"
+    - "kami"
+    - "salhack"
+    - "pyro"
+    - "konas"
+announcements:
+  enabled: true
+  interval-minutes: 60
+  template: "&cCortex &7has banned &e%count% &7players over the past 24 hours."
+punishments:
+  command: "ban %player% Cortex AntiCheat: %check%"
+  violation-threshold: 12
+  ip-ban:
+    enabled: true
+    command: "ban-ip %ip% Cortex AntiCheat: %player% failed %check%"
+    execute-on-remote-sync: true
+checks:
+  movement:
+    max-horizontal-blocks-per-second: 12.5
+    max-vertical-delta: 1.35
+  combat:
+    max-cps: 18
+    max-reach: 3.45
+  packet:
+    max-arm-swing-packets-per-second: 25
+    max-interact-packets-per-second: 30
+  esp:
+    max-hidden-aim-samples-per-second: 8
+    max-distance: 32.0
+    aim-angle-degrees: 4.0
