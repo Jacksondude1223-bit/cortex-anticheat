@@ -30,7 +30,7 @@ public final class SyncService implements PluginMessageListener {
         Bukkit.getMessenger().unregisterIncomingPluginChannel(plugin, channel, this);
     }
 
-    public void publishBan(UUID uuid, String name, String check) {
+    public void publishBan(UUID uuid, String name, String ipAddress, String check) {
         if (!plugin.getConfig().getBoolean("sync.enabled", true)) return;
         Player carrier = Bukkit.getOnlinePlayers().stream().findAny().orElse(null);
         if (carrier == null) return;
@@ -39,6 +39,7 @@ public final class SyncService implements PluginMessageListener {
         out.writeUTF(plugin.serverId());
         out.writeUTF(uuid.toString());
         out.writeUTF(name);
+        out.writeUTF(ipAddress);
         out.writeUTF(check);
         carrier.sendPluginMessage(plugin, channel, out.toByteArray());
     }
@@ -51,9 +52,11 @@ public final class SyncService implements PluginMessageListener {
         String sourceServer = input.readUTF();
         input.readUTF();
         String name = input.readUTF();
+        String ipAddress = input.readUTF();
         String check = input.readUTF();
         if (plugin.serverId().equals(sourceServer)) return;
-        plugin.punishmentService().recordRemoteBan();
+        plugin.punishmentService().recordRemoteBan(name, ipAddress, check);
         plugin.getLogger().info("Received synced Cortex ban for " + name + " from " + sourceServer + " (" + check + ")");
+        plugin.discordWebhookService().logSync(name, sourceServer, check);
     }
 }

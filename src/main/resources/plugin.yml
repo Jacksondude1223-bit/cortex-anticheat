@@ -1,7 +1,6 @@
 name: CortexAntiCheat
 version: ${project.version}
 main: com.cortex.anticheat.CortexAntiCheatPlugin
-api-version: '1.20'
 author: Cortex
 commands:
   cortex:

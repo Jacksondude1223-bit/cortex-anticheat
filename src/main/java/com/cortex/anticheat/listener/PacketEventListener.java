@@ -5,6 +5,7 @@ import com.cortex.anticheat.checks.PlayerProfile;
 import com.cortex.anticheat.checks.ViolationService;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -14,6 +15,7 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.player.PlayerAnimationEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.util.Vector;
 
 public final class PacketEventListener implements Listener {
     private final ViolationService violations;
@@ -23,6 +25,9 @@ public final class PacketEventListener implements Listener {
     private final int maxInteracts;
     private final int maxCps;
     private final double maxReach;
+    private final int maxHiddenAimSamples;
+    private final double espMaxDistance;
+    private final double espMinimumDot;
 
     public PacketEventListener(ViolationService violations, org.bukkit.configuration.file.FileConfiguration config) {
         this.violations = violations;
@@ -32,6 +37,10 @@ public final class PacketEventListener implements Listener {
         this.maxInteracts = config.getInt("checks.packet.max-interact-packets-per-second", 30);
         this.maxCps = config.getInt("checks.combat.max-cps", 18);
         this.maxReach = config.getDouble("checks.combat.max-reach", 3.45);
+        this.maxHiddenAimSamples = config.getInt("checks.esp.max-hidden-aim-samples-per-second", 8);
+        this.espMaxDistance = config.getDouble("checks.esp.max-distance", 32.0);
+        double aimAngle = config.getDouble("checks.esp.aim-angle-degrees", 4.0);
+        this.espMinimumDot = Math.cos(Math.toRadians(aimAngle));
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -42,12 +51,13 @@ public final class PacketEventListener implements Listener {
         Location to = event.getTo();
         double horizontal = Math.hypot(to.getX() - from.getX(), to.getZ() - from.getZ());
         double vertical = to.getY() - from.getY();
-        if (horizontal > maxHorizontal && !player.isGliding() && !player.isInsideVehicle()) {
+        if (horizontal > maxHorizontal && !isGliding(player) && !player.isInsideVehicle()) {
             violations.flag(new DetectionContext(player, "Movement.Speed", 1.2, "h=" + round(horizontal)));
         }
-        if (vertical > maxVertical && !player.isFlying() && !player.isGliding()) {
+        if (vertical > maxVertical && !player.isFlying() && !isGliding(player)) {
             violations.flag(new DetectionContext(player, "Movement.Vertical", 1.5, "y=" + round(vertical)));
         }
+        checkEspTrace(player, from, to);
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -71,7 +81,8 @@ public final class PacketEventListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onDamage(EntityDamageByEntityEvent event) {
-        if (!(event.getDamager() instanceof Player player)) return;
+        if (!(event.getDamager() instanceof Player)) return;
+        Player player = (Player) event.getDamager();
         PlayerProfile profile = violations.profile(player);
         int cps = profile.recordAttack();
         if (cps > maxCps) {
@@ -82,8 +93,53 @@ public final class PacketEventListener implements Listener {
         }
     }
 
+    private void checkEspTrace(Player player, Location from, Location to) {
+        if (Math.abs(from.getYaw() - to.getYaw()) < 0.01 && Math.abs(from.getPitch() - to.getPitch()) < 0.01) return;
+        Player target = hiddenAimedTarget(player);
+        if (target == null) return;
+        PlayerProfile profile = violations.profile(player);
+        int samples = profile.recordHiddenAimSample();
+        if (samples > maxHiddenAimSamples) {
+            violations.flag(new DetectionContext(player, "Vision.ESP", 0.9, "target=" + target.getName() + " samples=" + samples));
+        }
+    }
+
+    private Player hiddenAimedTarget(Player player) {
+        Vector direction = player.getEyeLocation().getDirection().normalize();
+        Location eye = player.getEyeLocation();
+        Player best = null;
+        double bestDot = espMinimumDot;
+        for (Entity entity : player.getNearbyEntities(espMaxDistance, espMaxDistance, espMaxDistance)) {
+            if (!(entity instanceof Player)) continue;
+            Player target = (Player) entity;
+            if (target.equals(player) || exempt(target) || player.hasLineOfSight(target)) continue;
+            Vector offset = target.getEyeLocation().toVector().subtract(eye.toVector());
+            double distance = offset.length();
+            if (distance <= 0.01 || distance > espMaxDistance) continue;
+            double dot = direction.dot(offset.normalize());
+            if (dot > bestDot) {
+                bestDot = dot;
+                best = target;
+            }
+        }
+        return best;
+    }
+
     private boolean exempt(Player player) {
-        return player.getGameMode() == GameMode.CREATIVE || player.getGameMode() == GameMode.SPECTATOR || player.getAllowFlight();
+        return player.getGameMode() == GameMode.CREATIVE || isSpectator(player) || player.getAllowFlight();
+    }
+
+    private boolean isSpectator(Player player) {
+        return "SPECTATOR".equals(player.getGameMode().name());
+    }
+
+    private boolean isGliding(Player player) {
+        try {
+            Object result = player.getClass().getMethod("isGliding").invoke(player);
+            return result instanceof Boolean && (Boolean) result;
+        } catch (ReflectiveOperationException ignored) {
+            return false;
+        }
     }
 
     private static double round(double value) {

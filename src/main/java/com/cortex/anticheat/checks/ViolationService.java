@@ -35,6 +35,7 @@ public final class ViolationService {
                 .filter(player -> player.hasPermission("cortex.alerts"))
                 .forEach(player -> player.sendMessage(alert));
         plugin.getLogger().warning(ChatColor.stripColor(alert));
+        plugin.discordWebhookService().logViolation(context.player().getName(), context.check(), profile.violations(), context.detail());
 
         double threshold = plugin.getConfig().getDouble("punishments.violation-threshold", 12.0);
         if (profile.violations() >= threshold) {
