@@ -2,6 +2,7 @@ package com.cortex.anticheat;
 
 import com.cortex.anticheat.checks.ViolationService;
 import com.cortex.anticheat.command.CortexCommand;
+import com.cortex.anticheat.listener.ClientBrandListener;
 import com.cortex.anticheat.listener.PacketEventListener;
 import com.cortex.anticheat.punish.PunishmentService;
 import com.cortex.anticheat.sync.SyncService;
@@ -14,6 +15,7 @@ public final class CortexAntiCheatPlugin extends JavaPlugin {
     private PunishmentService punishmentService;
     private SyncService syncService;
     private ViolationService violationService;
+    private ClientBrandListener clientBrandListener;
 
     @Override
     public void onEnable() {
@@ -21,8 +23,10 @@ public final class CortexAntiCheatPlugin extends JavaPlugin {
         this.punishmentService = new PunishmentService(this);
         this.syncService = new SyncService(this);
         this.violationService = new ViolationService(this, punishmentService);
+        this.clientBrandListener = new ClientBrandListener(this);
 
         syncService.start();
+        clientBrandListener.start();
         Bukkit.getPluginManager().registerEvents(new PacketEventListener(violationService, getConfig()), this);
         getCommand("cortex").setExecutor(new CortexCommand(this));
 
@@ -38,6 +42,7 @@ public final class CortexAntiCheatPlugin extends JavaPlugin {
     @Override
     public void onDisable() {
         if (syncService != null) syncService.stop();
+        if (clientBrandListener != null) clientBrandListener.stop();
     }
 
     public PunishmentService punishmentService() { return punishmentService; }

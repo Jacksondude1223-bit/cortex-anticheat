@@ -7,8 +7,8 @@ Cortex AntiCheat is a legacy-compatible Spigot/Paper plugin with an optional Bun
 - Scheduled anti-cheat job that continuously decays violation levels.
 - Compiles against the Spigot 1.8.8 API and avoids modern-only Bukkit calls for broad server-version compatibility.
 - Includes a `bungee.yml` proxy entry point for BungeeCord network-wide sync and announcements.
-- Packet-event detection through movement, animation, interaction, and combat events.
-- Checks for speed, vertical movement, click rate, swing/interact packet rate, reach, and ESP-style hidden-player tracking.
+- Packet-event detection through movement, animation, interaction, combat, and client-brand plugin messages.
+- Checks for speed, vertical movement, click rate, swing/interact packet rate, reach, ESP-style hidden-player tracking, and known hacked client brands such as Wurst.
 - Configurable ban/IP-ban commands and violation threshold.
 - Plugin-message sync channel intended for proxy-connected Bed Wars, PVP, SMP, and other backend servers.
 - Optional remote IP-ban execution when a synced ban includes an IP address.

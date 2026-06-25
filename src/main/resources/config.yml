@@ -6,6 +6,24 @@ job:
 sync:
   enabled: true
   channel: "cortex:sync"
+client-detection:
+  enabled: true
+  kick-message: "&cCortex AntiCheat\n&7The client &e%client% &7is not allowed on this server because it is a known hacked client."
+  blocked-brands:
+    - "wurst"
+    - "meteor"
+    - "impact"
+    - "aristois"
+    - "liquidbounce"
+    - "sigma"
+    - "future"
+    - "rusherhack"
+    - "bleachhack"
+    - "inertia"
+    - "kami"
+    - "salhack"
+    - "pyro"
+    - "konas"
 announcements:
   enabled: true
   interval-minutes: 60
