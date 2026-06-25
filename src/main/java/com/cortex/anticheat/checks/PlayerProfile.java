@@ -12,6 +12,7 @@ public final class PlayerProfile {
     private final Deque<Long> swings = new ArrayDeque<>();
     private final Deque<Long> interacts = new ArrayDeque<>();
     private final Deque<Long> attacks = new ArrayDeque<>();
+    private final Deque<Long> hiddenAimSamples = new ArrayDeque<>();
 
     public PlayerProfile(UUID uuid) {
         this.uuid = uuid;
@@ -27,6 +28,7 @@ public final class PlayerProfile {
     public int recordSwing() { return record(swings); }
     public int recordInteract() { return record(interacts); }
     public int recordAttack() { return record(attacks); }
+    public int recordHiddenAimSample() { return record(hiddenAimSamples); }
 
     private int record(Deque<Long> samples) {
         long now = Instant.now().toEpochMilli();

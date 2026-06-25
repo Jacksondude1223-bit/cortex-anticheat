@@ -27,3 +27,7 @@ checks:
   packet:
     max-arm-swing-packets-per-second: 25
     max-interact-packets-per-second: 30
+  esp:
+    max-hidden-aim-samples-per-second: 8
+    max-distance: 32.0
+    aim-angle-degrees: 4.0
