@@ -24,9 +24,11 @@ public final class PunishmentService {
         plugin.syncService().publishBan(player.getUniqueId(), player.getName(), address.orElse(""), check);
         dispatchConfiguredCommand("punishments.command", player.getName(), address.orElse(""), check);
         if (plugin.getConfig().getBoolean("punishments.ip-ban.enabled", true)) {
-            address.ifPresentOrElse(
-                    ip -> dispatchConfiguredCommand("punishments.ip-ban.command", player.getName(), ip, check),
-                    () -> plugin.getLogger().warning("Cannot IP-ban " + player.getName() + " because no socket address is available."));
+            if (address.isPresent()) {
+                dispatchConfiguredCommand("punishments.ip-ban.command", player.getName(), address.get(), check);
+            } else {
+                plugin.getLogger().warning("Cannot IP-ban " + player.getName() + " because no socket address is available.");
+            }
         }
     }
 

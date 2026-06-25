@@ -42,10 +42,10 @@ public final class PacketEventListener implements Listener {
         Location to = event.getTo();
         double horizontal = Math.hypot(to.getX() - from.getX(), to.getZ() - from.getZ());
         double vertical = to.getY() - from.getY();
-        if (horizontal > maxHorizontal && !player.isGliding() && !player.isInsideVehicle()) {
+        if (horizontal > maxHorizontal && !isGliding(player) && !player.isInsideVehicle()) {
             violations.flag(new DetectionContext(player, "Movement.Speed", 1.2, "h=" + round(horizontal)));
         }
-        if (vertical > maxVertical && !player.isFlying() && !player.isGliding()) {
+        if (vertical > maxVertical && !player.isFlying() && !isGliding(player)) {
             violations.flag(new DetectionContext(player, "Movement.Vertical", 1.5, "y=" + round(vertical)));
         }
     }
@@ -71,7 +71,8 @@ public final class PacketEventListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onDamage(EntityDamageByEntityEvent event) {
-        if (!(event.getDamager() instanceof Player player)) return;
+        if (!(event.getDamager() instanceof Player)) return;
+        Player player = (Player) event.getDamager();
         PlayerProfile profile = violations.profile(player);
         int cps = profile.recordAttack();
         if (cps > maxCps) {
@@ -83,7 +84,20 @@ public final class PacketEventListener implements Listener {
     }
 
     private boolean exempt(Player player) {
-        return player.getGameMode() == GameMode.CREATIVE || player.getGameMode() == GameMode.SPECTATOR || player.getAllowFlight();
+        return player.getGameMode() == GameMode.CREATIVE || isSpectator(player) || player.getAllowFlight();
+    }
+
+    private boolean isSpectator(Player player) {
+        return "SPECTATOR".equals(player.getGameMode().name());
+    }
+
+    private boolean isGliding(Player player) {
+        try {
+            Object result = player.getClass().getMethod("isGliding").invoke(player);
+            return result instanceof Boolean && (Boolean) result;
+        } catch (ReflectiveOperationException ignored) {
+            return false;
+        }
     }
 
     private static double round(double value) {

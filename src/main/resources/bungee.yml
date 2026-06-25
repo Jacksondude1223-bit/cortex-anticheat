@@ -1,0 +1,4 @@
+name: CortexAntiCheat
+version: ${project.version}
+main: com.cortex.anticheat.proxy.CortexBungeePlugin
+author: Cortex
