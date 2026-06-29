@@ -27,9 +27,14 @@ public final class CortexBungeePlugin extends Plugin implements Listener {
     private static final String CHANNEL = "cortex:sync";
     private static final String LEGACY_BRAND_CHANNEL = "MC|Brand";
     private static final String MODERN_BRAND_CHANNEL = "minecraft:brand";
+    private static final String LEGACY_REGISTER_CHANNEL = "REGISTER";
+    private static final String MODERN_REGISTER_CHANNEL = "minecraft:register";
     private static final List<String> BLOCKED_CLIENTS = Arrays.asList(
             "wurst", "meteor", "impact", "aristois", "liquidbounce", "sigma",
             "future", "rusherhack", "bleachhack", "inertia", "kami", "salhack", "pyro", "konas");
+    private static final List<String> BYPASS_TOKENS = Arrays.asList(
+            "bypass", "anticheat", "anti-cheat", "nocheat", "disabler", "verus",
+            "vulcan", "matrix", "grim", "aac", "cortex:bypass");
     private final Deque<Long> bans = new ArrayDeque<Long>();
 
     @Override
@@ -37,6 +42,8 @@ public final class CortexBungeePlugin extends Plugin implements Listener {
         ProxyServer.getInstance().registerChannel(CHANNEL);
         ProxyServer.getInstance().registerChannel(LEGACY_BRAND_CHANNEL);
         ProxyServer.getInstance().registerChannel(MODERN_BRAND_CHANNEL);
+        ProxyServer.getInstance().registerChannel(LEGACY_REGISTER_CHANNEL);
+        ProxyServer.getInstance().registerChannel(MODERN_REGISTER_CHANNEL);
         ProxyServer.getInstance().getPluginManager().registerListener(this, this);
         ProxyServer.getInstance().getScheduler().schedule(this, new Runnable() {
             @Override
@@ -52,12 +59,18 @@ public final class CortexBungeePlugin extends Plugin implements Listener {
         ProxyServer.getInstance().unregisterChannel(CHANNEL);
         ProxyServer.getInstance().unregisterChannel(LEGACY_BRAND_CHANNEL);
         ProxyServer.getInstance().unregisterChannel(MODERN_BRAND_CHANNEL);
+        ProxyServer.getInstance().unregisterChannel(LEGACY_REGISTER_CHANNEL);
+        ProxyServer.getInstance().unregisterChannel(MODERN_REGISTER_CHANNEL);
     }
 
     @EventHandler
     public void onPluginMessage(PluginMessageEvent event) {
         if (LEGACY_BRAND_CHANNEL.equals(event.getTag()) || MODERN_BRAND_CHANNEL.equals(event.getTag())) {
             handleBrand(event);
+            return;
+        }
+        if (LEGACY_REGISTER_CHANNEL.equals(event.getTag()) || MODERN_REGISTER_CHANNEL.equals(event.getTag())) {
+            handleBypassRegister(event);
             return;
         }
         if (!CHANNEL.equals(event.getTag())) return;
@@ -82,6 +95,28 @@ public final class CortexBungeePlugin extends Plugin implements Listener {
                 + ChatColor.YELLOW + detectedClient + ChatColor.GRAY
                 + " is not allowed on this server because it is a known hacked client.");
         getLogger().warning("Kicked " + player.getName() + " for disallowed client brand: " + brand);
+    }
+
+    private void handleBypassRegister(PluginMessageEvent event) {
+        ProxiedPlayer player = playerConnection(event);
+        if (player == null) return;
+        String payload = readBrand(event.getData());
+        String token = matchedBypassToken(event.getTag() + " " + payload);
+        if (token == null) return;
+        player.disconnect(ChatColor.RED + "Cortex AntiCheat\n" + ChatColor.GRAY
+                + "A mod-menu anti-cheat bypass module was detected and is not allowed. Matched: "
+                + ChatColor.YELLOW + token);
+        getLogger().warning("Kicked " + player.getName() + " for anti-bypass token: " + token);
+    }
+
+    private String matchedBypassToken(String value) {
+        String normalized = value.toLowerCase(Locale.ROOT);
+        for (String token : BYPASS_TOKENS) {
+            if (normalized.contains(token.toLowerCase(Locale.ROOT))) {
+                return token;
+            }
+        }
+        return null;
     }
 
     private ProxiedPlayer playerConnection(PluginMessageEvent event) {

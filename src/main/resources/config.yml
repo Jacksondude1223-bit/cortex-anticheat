@@ -10,6 +10,27 @@ discord:
   enabled: false
   webhook-url: "https://discord.com/api/webhooks/paste-webhook-here"
   username: "Cortex AntiCheat"
+anti-bypass:
+  enabled: true
+  kick-on-detection: true
+  kick-message: "&cCortex AntiCheat\n&7A mod-menu anti-cheat bypass module was detected and is not allowed. Matched: &e%token%"
+  suspicious-tokens:
+    - "bypass"
+    - "anticheat"
+    - "anti-cheat"
+    - "cortex:bypass"
+    - "nocheat"
+    - "disabler"
+    - "verus"
+    - "vulcan"
+    - "matrix"
+    - "grim"
+    - "aac"
+    - "wurst"
+    - "meteor"
+    - "liquidbounce"
+    - "impact"
+    - "aristois"
 client-detection:
   enabled: true
   kick-message: "&cCortex AntiCheat\n&7The client &e%client% &7is not allowed on this server because it is a known hacked client."
